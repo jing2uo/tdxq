@@ -8,9 +8,9 @@ import requests
 from config import quest
 from utils import get_logger
 
-logger = get_logger(__name__)
-
 warnings.simplefilter("ignore", UserWarning)
+
+logger = get_logger(__name__)
 
 
 class QuestBase:
