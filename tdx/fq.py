@@ -10,8 +10,8 @@ def fq(bfq_data, xdxr_data, fqtype="qfq"):
             [bfq_data, info.loc[bfq_data.index[0] : bfq_data.index[-1], ["category"]]],
             axis=1,
         )
-        data["if_trade"].fillna(value=0, inplace=True)
-        data = data.ffill()
+        data.fillna({"if_trade": 0}, inplace=True)
+        data.ffill()
         data = pd.concat(
             [
                 data,
@@ -30,7 +30,7 @@ def fq(bfq_data, xdxr_data, fqtype="qfq"):
             ],
             axis=1,
         )
-    data = data.fillna(0)
+    data.ffill()
 
     data["preclose"] = (
         data["close"].shift(1) * 10 - data["fenhong"] + data["peigu"] * data["peigujia"]
