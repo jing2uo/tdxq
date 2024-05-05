@@ -113,7 +113,7 @@ def xg():
             make_plot(df)
 
     logger.info("选股完成，以下股票绘图完成")
-    with open("/datapool/xg.txt", "w") as file:
+    with open("{}/xg.txt".format(work_dir), "w") as file:
         for item in my_list:
             file.write(str(item) + "\n")
             logger.info(s["name"])
