@@ -70,12 +70,12 @@ def update_stock():
         logger.info("现在是 {}".format(end))
         logger.info("共需要更新 {} 天数据".format(len(dates)))
         if not dates.empty:
-            with multiprocessing.Pool() as p:
-                r = p.map(oneday, dates.strftime("%Y%m%d").tolist())
             for i, date in enumerate(dates):
-                if r[i]:
+                logger.info("尝试更新 {} 的数据".format(date.strftime("%Y-%m-%d")))
+                r = oneday(date.strftime("%Y%m%d"))
+                if r:
                     logger.info("{} 的数据更新完成".format(date.strftime("%Y-%m-%d")))
-                if not r[i]:
+                else:
                     logger.info("{} 非交易日".format(date.strftime("%Y-%m-%d")))
         else:
             logger.info("stock 表数据已经是最新，不需要更新")

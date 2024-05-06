@@ -9,7 +9,7 @@ RUN wget http://prdownloads.sourceforge.net/ta-lib/ta-lib-0.4.0-src.tar.gz -O ta
 
 RUN wget http://www.tdx.com.cn/products/autoup/cyb/linuxtool.rar -O linuxtool.rar && \
     unrar x linuxtool.rar && rm linuxtool.rar && \
-    mv v3/datatool /usr/bin/ && chmod a+x /usr/bin/datatool
+    mv v4/datatool /usr/bin/ && chmod a+x /usr/bin/datatool
 
 WORKDIR /qtdx
 COPY . .

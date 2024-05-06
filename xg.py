@@ -96,6 +96,7 @@ def xg():
             if (
                 cross(df_7["ma50"], df_7["ma250"])
                 or cross(df_7["close"], df_7["ma50"])
+                or cross(df_7["close"], df_7["ma250"])
                 or cross(df_7["lips"], df_7["teeth"])
                 or cross(df_7["lips"], df_7["jaws"])
             ):
@@ -112,11 +113,7 @@ def xg():
             my_list.append(s)
             make_plot(df)
 
-    logger.info("选股完成，以下股票绘图完成")
-    with open("{}/xg.txt".format(work_dir), "w") as file:
-        for item in my_list:
-            file.write(str(item) + "\n")
-            logger.info(s["name"])
+    logger.info("选股完成")
 
 
 if __name__ == "__main__":

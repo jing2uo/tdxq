@@ -23,10 +23,10 @@ class TdxDataTool:
             cmd = ["which", "datatool"]
             check_output(cmd)
         except CalledProcessError:
-            raise FileNotFoundError("Please install datatool(v3) to PATH")
+            raise FileNotFoundError("Please install datatool(v4) to PATH")
 
     def _check_if_workday(self, date: datestr) -> bool:
-        url = "https://www.tdx.com.cn/products/data/data/g3day/{}.zip".format(date)
+        url = "https://www.tdx.com.cn/products/data/data/g4day/{}.zip".format(date)
         if requests.head(url).status_code == 200:
             self.url = url
             return True
@@ -44,6 +44,7 @@ class TdxDataTool:
             clean_dir(today_dir)
             sh_day_dir = today_dir + "/sh/lday"
             sz_day_dir = today_dir + "/sz/lday"
+            bj_day_dir = today_dir + "/bj/lday"
 
             dt_ini = """[PATH]\nVIPDOC={}\n""".format(today_dir)
             with open(today_dir + "/datatool.ini", "w") as f:
@@ -64,8 +65,12 @@ class TdxDataTool:
 
             aio = today_dir + "/allinone"
             p = Popen(
-                "mkdir -p {aio} && mv {sh_day_dir} {aio}/sh && mv {sz_day_dir} {aio}/sz".format(
-                    aio=aio, sz_day_dir=sz_day_dir, sh_day_dir=sh_day_dir
+                """mkdir -p {aio} && mv {sh_day_dir} {aio}/sh && mv {sz_day_dir} {aio}/sz && mv {bj_day_dir} {aio}/bj
+                """.format(
+                    aio=aio,
+                    sz_day_dir=sz_day_dir,
+                    sh_day_dir=sh_day_dir,
+                    bj_day_dir=bj_day_dir,
                 ),
                 shell=True,
             )
