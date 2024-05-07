@@ -1,3 +1,4 @@
+import multiprocessing
 import mplfinance as mpf
 import pandas as pd
 from datetime import timedelta
@@ -67,17 +68,39 @@ def cross(df1, df2):
     for i in range(1, len(df1)):
         if df1.iloc[i] > df2.iloc[i] and df1.iloc[i - 1] <= df2.iloc[i - 1]:
             return True
-
     return False
+
+
+def check(s):
+    symbol = s["exchange"] + s["code"]
+    df = eyu(symbol)
+
+    sh_latest = stock.latest_data("sh999999").index[0]
+    start_date = sh_latest - timedelta(7)
+    df_7 = df[start_date:]
+    if (
+        not df_7.empty
+        and df_7["close"].iloc[-1] > df_7["ma50"].iloc[-1]
+        and df_7["ao"].iloc[-1] < 0
+        and df_7["ao"].iloc[-1] > df_7["ao"].iloc[-2] > df_7["ao"].iloc[-3]
+        # if (
+        # cross(df_7["ma50"], df_7["ma250"])
+        # or cross(df_7["close"], df_7["ma50"])
+        # or cross(df_7["close"], df_7["ma250"])
+        # or cross(df_7["lips"], df_7["teeth"])
+        # or cross(df_7["lips"], df_7["jaws"])
+    ):
+        make_plot(df)
+        return s
 
 
 def xg():
     logger.info("开始选股")
     logger.info("清理目录:{}".format(work_dir))
     clean_dir(work_dir)
-    stocks = get_all_stocks()
+    stocks_list = get_all_stocks()
     pre_list = []
-    for s in stocks:
+    for s in stocks_list:
         if (
             s["exchange"] != "bj"
             and s["market"] != "sh_star"
@@ -87,34 +110,14 @@ def xg():
             and "ST" not in s["name"]
         ):
             pre_list.append(s)
-    sh_latest = stock.latest_data("sh999999").index[0]
-    start_date = sh_latest - timedelta(7)
 
-    def check(df):
-        df_7 = df[start_date:]
-        if not df_7.empty and df_7["close"].iloc[-1] > df_7["ma250"].iloc[-1]:
-            if (
-                cross(df_7["ma50"], df_7["ma250"])
-                or cross(df_7["close"], df_7["ma50"])
-                or cross(df_7["close"], df_7["ma250"])
-                or cross(df_7["lips"], df_7["teeth"])
-                or cross(df_7["lips"], df_7["jaws"])
-            ):
-                return s
+    with multiprocessing.Pool() as pool:
+        my_list = pool.map(check, pre_list)
 
-    my_list = []
-    count = 0
-    for s in pre_list:
-        logger.info("进行中: {}/{}".format(count, len(pre_list)))
-        symbol = s["exchange"] + s["code"]
-        df = eyu(symbol)
-        count += 1
-        if check(df):
-            my_list.append(s)
-
-    with open(work_dir.rstrip("/") + "/o.txt", "w") as file:
+    with open(work_dir.rstrip("/") + "/xg.txt", "w") as file:
         for i in my_list:
-            file.write(str(i) + "\n")
+            if i is not None:
+                file.write(str(i["code"]) + "\n")
 
     logger.info("选股完成")
 

@@ -34,16 +34,13 @@ def insert_dayfile(file: str):
     stock.bulk_insert_csv(csv)
 
 
-def oneday(date: datestr = None, clean=True):
+def oneday(date: datestr = None):
     d = datatool.download_dayfile(date)
     if d != "not workday":
-        p = multiprocessing.Pool()
-        for f in list_dir(d):
-            p.apply_async(insert_dayfile, (f,))
-        p.close()
-        p.join()
-        if clean == True:
-            remove_dir(d)
+        day_files = list_dir(d)
+        with multiprocessing.Pool() as pool:
+            pool.map(insert_dayfile, day_files)
+        remove_dir(d)
         return True
     else:
         return None
