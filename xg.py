@@ -111,7 +111,10 @@ def xg():
         count += 1
         if check(df):
             my_list.append(s)
-            make_plot(df)
+
+    with open(work_dir.rstrip("/") + "/o.txt", "w") as file:
+        for i in my_list:
+            file.write(str(i) + "\n")
 
     logger.info("选股完成")
 
