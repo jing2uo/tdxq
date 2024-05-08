@@ -1,9 +1,11 @@
 import requests
 import json
 import logging
+import telebot
+
 from colorama import Fore, Style
 
-from config import feishu_token
+from config import feishu_token, tg_token, tg_chatid
 
 
 def get_logger(name):
@@ -45,3 +47,8 @@ def feishu_notify(text: str):
     payload = {"msg_type": "text", "content": {"text": keyword + text}}
     headers = {"Content-Type": "application/json"}
     requests.post(url, headers=headers, data=json.dumps(payload))
+
+
+def tg_notify(text: str):
+    bot = telebot.TeleBot(tg_token)
+    bot.send_message(tg_chatid, text)

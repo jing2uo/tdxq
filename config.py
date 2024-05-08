@@ -3,6 +3,8 @@ import os
 
 work_dir = os.getenv("WORK_DIR", "/tmp/tdx/")
 feishu_token = os.getenv("FEISHU_TOKEN")
+tg_token = os.getenv("TG_TOKEN")
+tg_chatid = os.getenv("TG_CHATID")
 
 db_user = os.getenv("DB_USER", "admin")
 db_password = os.getenv("DB_PASSWORD", "quest")

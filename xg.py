@@ -1,6 +1,7 @@
 import multiprocessing
 import mplfinance as mpf
 import pandas as pd
+import numpy as np
 from datetime import timedelta
 
 
@@ -18,22 +19,39 @@ logger = get_logger(__name__)
 def make_plot(df):
     p = df[-90:]
 
-    add_study = [
-        mpf.make_addplot(p["jaws"], color="b", linestyle="-", panel=0),
-        mpf.make_addplot(p["lips"], color="g", linestyle="-", panel=0),
-        mpf.make_addplot(p["teeth"], color="r", linestyle="-", panel=0),
-        mpf.make_addplot(p["ma50"], color="dimgray", linestyle="--", panel=0),
-        mpf.make_addplot(p["ma250"], color="orange", linestyle="--", panel=0),
-        mpf.make_addplot(
-            p["ao"],
-            type="bar",
-            width=0.7,
-            panel=2,
-            color="dimgray",
-            alpha=1,
-            secondary_y=False,
-        ),
-    ]
+    def plot_check(df, column_name):
+        if not np.isnan(df[column_name]).all():
+            return True
+        else:
+            return False
+
+    add_study = []
+    if plot_check(p, "jaws") and plot_check(p, "lips") and plot_check(p, "teeth"):
+        add_study.append(mpf.make_addplot(p["jaws"], color="b", linestyle="-", panel=0))
+        add_study.append(mpf.make_addplot(p["lips"], color="g", linestyle="-", panel=0))
+        add_study.append(
+            mpf.make_addplot(p["teeth"], color="r", linestyle="-", panel=0)
+        )
+    if plot_check(p, "ma50"):
+        add_study.append(
+            mpf.make_addplot(p["ma50"], color="dimgray", linestyle="--", panel=0)
+        )
+    if plot_check(p, "ma200"):
+        add_study.append(
+            mpf.make_addplot(p["ma200"], color="orange", linestyle="--", panel=0)
+        )
+    if plot_check(p, "ao"):
+        add_study.append(
+            mpf.make_addplot(
+                p["ao"],
+                type="bar",
+                width=0.7,
+                panel=2,
+                color="dimgray",
+                alpha=1,
+                secondary_y=False,
+            ),
+        )
     symbol = df["symbol"].iloc[0]
     mc = mpf.make_marketcolors(up="r", down="g")
     s = mpf.make_mpf_style(marketcolors=mc)
@@ -58,7 +76,7 @@ def eyu(symbol):
     tmp = pd.DataFrame()
     tmp["ao"] = get_ao(df)
     tmp["ma50"] = get_ma(df, 50)
-    tmp["ma250"] = get_ma(df, 250)
+    tmp["ma200"] = get_ma(df, 200)
     tmp["jaws"], tmp["teeth"], tmp["lips"] = get_alligator(df)
 
     return df.merge(tmp, left_index=True, right_index=True)
@@ -73,25 +91,28 @@ def cross(df1, df2):
 
 def check(s):
     symbol = s["exchange"] + s["code"]
-    df = eyu(symbol)
+    df_all = eyu(symbol)
 
     sh_latest = stock.latest_data("sh999999").index[0]
-    start_date = sh_latest - timedelta(7)
-    df_7 = df[start_date:]
+    start_date = sh_latest - timedelta(15)
+    df = df_all[start_date:]
     if (
-        not df_7.empty
-        and df_7["close"].iloc[-1] > df_7["ma50"].iloc[-1]
-        and df_7["ao"].iloc[-1] < 0
-        and df_7["ao"].iloc[-1] > df_7["ao"].iloc[-2] > df_7["ao"].iloc[-3]
+        not df.empty
+        and df["close"].iloc[-1] > df["ma50"].iloc[-1]
+        and df["ao"].iloc[-1] < 0
+        and df["ao"].iloc[-1] > df["ao"].iloc[-2] > df["ao"].iloc[-3]
         # if (
-        # cross(df_7["ma50"], df_7["ma250"])
-        # or cross(df_7["close"], df_7["ma50"])
-        # or cross(df_7["close"], df_7["ma250"])
-        # or cross(df_7["lips"], df_7["teeth"])
-        # or cross(df_7["lips"], df_7["jaws"])
+        # cross(df["ma50"], df["ma200"])
+        # or cross(df["close"], df["ma50"])
+        # or cross(df["close"], df["ma200"])
+        # or cross(df["lips"], df["teeth"])
+        # or cross(df["lips"], df["jaws"])
     ):
-        make_plot(df)
-        return s
+        try:
+            make_plot(df_all)
+            return s["code"]
+        except:
+            logger.error("生成图表失败:{}".format(symbol))
 
 
 def xg():
@@ -117,7 +138,7 @@ def xg():
     with open(work_dir.rstrip("/") + "/xg.txt", "w") as file:
         for i in my_list:
             if i is not None:
-                file.write(str(i["code"]) + "\n")
+                file.write(str(i) + "\n")
 
     logger.info("选股完成")
 

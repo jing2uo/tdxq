@@ -7,3 +7,4 @@ mplfinance
 matplotlib
 ta-lib
 colorama
+telebot
