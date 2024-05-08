@@ -2,7 +2,6 @@ import multiprocessing
 import mplfinance as mpf
 import pandas as pd
 import numpy as np
-from datetime import timedelta
 
 
 from db import stock, gbbq
@@ -92,27 +91,25 @@ def cross(df1, df2):
 def check(s):
     symbol = s["exchange"] + s["code"]
     df_all = eyu(symbol)
-
-    sh_latest = stock.latest_data("sh999999").index[0]
-    start_date = sh_latest - timedelta(15)
-    df = df_all[start_date:]
-    if (
-        not df.empty
-        and df["close"].iloc[-1] > df["ma50"].iloc[-1]
-        and df["ao"].iloc[-1] < 0
-        and df["ao"].iloc[-1] > df["ao"].iloc[-2] > df["ao"].iloc[-3]
-        # if (
-        # cross(df["ma50"], df["ma200"])
-        # or cross(df["close"], df["ma50"])
-        # or cross(df["close"], df["ma200"])
-        # or cross(df["lips"], df["teeth"])
-        # or cross(df["lips"], df["jaws"])
-    ):
-        try:
-            make_plot(df_all)
-            return s["code"]
-        except:
-            logger.error("生成图表失败:{}".format(symbol))
+    df = df_all.tail(7)
+    if not df.empty and df["close"].iloc[-1] > df["ma50"].iloc[-1]:
+        conditions = [
+            cross(df["ma50"], df["ma200"]),
+            cross(df["close"], df["ma50"]),
+            cross(df["close"], df["ma200"]),
+            cross(df["lips"], df["teeth"]),
+            cross(df["lips"], df["jaws"]),
+        ]
+        if (
+            any(conditions)
+            and df["ao"].iloc[-1] < 0
+            and df["ao"].iloc[-1] > df["ao"].iloc[-2] > df["ao"].iloc[-3]
+        ):
+            try:
+                make_plot(df_all)
+                return s["code"]
+            except:
+                logger.error("生成图表失败:{}".format(symbol))
 
 
 def xg():
