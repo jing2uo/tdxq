@@ -2,7 +2,10 @@ import pandas as pd
 
 
 def fq(bfq_data, xdxr_data, fqtype="qfq"):
-    info = xdxr_data.query("category==1")
+    if xdxr_data is None:
+        info = ""
+    else:
+        info = xdxr_data.query("category==1")
     bfq_data = bfq_data.assign(if_trade=1)
 
     if len(info) > 0:
