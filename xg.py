@@ -2,12 +2,11 @@ import multiprocessing
 import mplfinance as mpf
 import pandas as pd
 import numpy as np
+from datetime import datetime
 
-
-from db import stock, gbbq
+from db import stock, gbbq, csi
 from tdx import fq
 from indicator.compute import get_ao, get_alligator, get_ma
-from datasource.eastmoney import get_all_stocks
 
 from config import work_dir
 from utils import clean_dir, get_logger
@@ -69,7 +68,6 @@ def eyu(symbol):
     code = symbol[2:]
     xdxr_data = gbbq.query(code=code)
     bfq_data = stock.query(symbol=symbol)
-
     df = fq(bfq_data, xdxr_data)
 
     tmp = pd.DataFrame()
@@ -107,6 +105,7 @@ def check(s):
         ):
             try:
                 make_plot(df_all)
+                logger.info(s)
                 return s["code"]
             except:
                 logger.error("生成图表失败:{}".format(symbol))
@@ -116,21 +115,14 @@ def xg():
     logger.info("开始选股")
     logger.info("清理目录:{}".format(work_dir))
     clean_dir(work_dir)
-    stocks_list = get_all_stocks()
-    pre_list = []
-    for s in stocks_list:
-        if (
-            s["exchange"] != "bj"
-            and s["market"] != "sh_star"
-            and s["listed_date"] != 0
-            and "退" not in s["name"]
-            and "停" not in s["name"]
-            and "ST" not in s["name"]
-        ):
-            pre_list.append(s)
+    stocks_df = csi.query()
+    stocks_df["exchange"] = stocks_df["exchange"].apply(
+        lambda x: "sz" if "深圳" in str(x) else "sh" if "上海" in str(x) else x
+    )
+    stocks = stocks_df.to_dict("records")
 
     with multiprocessing.Pool() as pool:
-        my_list = pool.map(check, pre_list)
+        my_list = pool.map(check, stocks)
 
     with open(work_dir.rstrip("/") + "/xg.txt", "w") as file:
         for i in my_list:
