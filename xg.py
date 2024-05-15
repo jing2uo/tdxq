@@ -2,7 +2,6 @@ import multiprocessing
 import mplfinance as mpf
 import pandas as pd
 import numpy as np
-from datetime import datetime
 
 from db import stock, gbbq, csi
 from tdx import fq
@@ -72,8 +71,7 @@ def eyu(symbol):
 
     tmp = pd.DataFrame()
     tmp["ao"] = get_ao(df)
-    tmp["ma50"] = get_ma(df, 50)
-    tmp["ma200"] = get_ma(df, 200)
+    tmp["ma55"] = get_ma(df, 55)
     tmp["jaws"], tmp["teeth"], tmp["lips"] = get_alligator(df)
 
     return df.merge(tmp, left_index=True, right_index=True)
@@ -89,26 +87,18 @@ def cross(df1, df2):
 def check(s):
     symbol = s["exchange"] + s["code"]
     df_all = eyu(symbol)
-    df = df_all.tail(7)
-    if not df.empty and df["close"].iloc[-1] > df["ma50"].iloc[-1]:
-        conditions = [
-            cross(df["ma50"], df["ma200"]),
-            cross(df["close"], df["ma50"]),
-            cross(df["close"], df["ma200"]),
-            cross(df["lips"], df["teeth"]),
-            cross(df["lips"], df["jaws"]),
-        ]
-        if (
-            any(conditions)
-            and df["ao"].iloc[-1] < 0
-            and df["ao"].iloc[-1] > df["ao"].iloc[-2] > df["ao"].iloc[-3]
-        ):
-            try:
-                make_plot(df_all)
-                logger.info(s)
-                return s["code"]
-            except:
-                logger.error("生成图表失败:{}".format(symbol))
+    df = df_all.tail(15)
+    if (
+        not df.empty
+        and df["close"].iloc[-1] > df["ma55"].iloc[-1]
+        and df["high"].iloc[-1] > df["lips"].iloc[-1]
+        and df["lips"].iloc[-1] > df["teeth"].iloc[-1] > df["jaws"].iloc[-1]
+        and cross(df["lips"], df["teeth"])
+        and cross(df["lips"], df["jaws"])
+        and cross(df["teeth"], df["jaws"])
+    ):
+        logger.info(symbol + " " + s["name"])
+        return s["code"]
 
 
 def xg():
@@ -119,6 +109,7 @@ def xg():
     stocks_df["exchange"] = stocks_df["exchange"].apply(
         lambda x: "sz" if "深圳" in str(x) else "sh" if "上海" in str(x) else x
     )
+    stocks_df = stocks_df[~stocks_df.code.str.startswith("68")]
     stocks = stocks_df.to_dict("records")
 
     with multiprocessing.Pool() as pool:

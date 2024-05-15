@@ -1,4 +1,4 @@
-FROM python
+FROM python:slim
 WORKDIR /root/
 RUN rm -rf /etc/apt/sources.list* &&  \
     echo "deb http://mirrors.ustc.edu.cn/debian sid main contrib non-free" > /etc/apt/sources.list && \
