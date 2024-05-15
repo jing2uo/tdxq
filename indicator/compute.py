@@ -1,16 +1,8 @@
-import talib
 import pandas as pd
 
 
 def get_ma(df, period):
     return df.close.rolling(window=period).mean()
-
-
-def get_macd(df):
-    macd_dif, macd_dea, macd_bar = talib.MACD(
-        df["close"].values, fastperiod=12, slowperiod=26, signalperiod=9
-    )
-    return macd_dif, macd_dea, macd_bar
 
 
 def get_smma(df, period, df_col):
