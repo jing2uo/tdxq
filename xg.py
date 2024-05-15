@@ -29,9 +29,9 @@ def make_plot(df):
         add_study.append(
             mpf.make_addplot(p["teeth"], color="r", linestyle="-", panel=0)
         )
-    if plot_check(p, "ma50"):
+    if plot_check(p, "ma55"):
         add_study.append(
-            mpf.make_addplot(p["ma50"], color="dimgray", linestyle="--", panel=0)
+            mpf.make_addplot(p["ma55"], color="dimgray", linestyle="--", panel=0)
         )
     if plot_check(p, "ma200"):
         add_study.append(
@@ -72,6 +72,7 @@ def eyu(symbol):
     tmp = pd.DataFrame()
     tmp["ao"] = get_ao(df)
     tmp["ma55"] = get_ma(df, 55)
+    tmp["ma200"] = get_ma(df, 200)
     tmp["jaws"], tmp["teeth"], tmp["lips"] = get_alligator(df)
 
     return df.merge(tmp, left_index=True, right_index=True)
