@@ -7,8 +7,8 @@ from config import work_dir
 from tdx import dayfile
 from tdx import gbbq as gbbq_tdx
 from utils import unzip_file, clean_dir, list_dir
-from db import stock
-from db import gbbq as gbbq_db
+from database import stock
+from database import gbbq as gbbq_db
 
 from utils import get_logger
 
@@ -19,6 +19,7 @@ if __name__ == "__main__":
     sh_history = "https://www.tdx.com.cn/products/data/data/vipdoc/shlday.zip"
     sz_history = "https://www.tdx.com.cn/products/data/data/vipdoc/szlday.zip"
     bj_histoty = "https://www.tdx.com.cn/products/data/data/vipdoc/bjlday.zip"
+    zs_history = "https://www.tdx.com.cn/products/data/data/vipdoc/tdxzs_day.zip"
 
     parser = argparse.ArgumentParser(description="初始化历史数据")
 
@@ -41,6 +42,13 @@ if __name__ == "__main__":
         help="北证所有证券日线文件路径, 可以从 {} 下载".format(bj_histoty),
     )
 
+    parser.add_argument(
+        "--zs",
+        type=str,
+        required=True,
+        help="通达信板块指数日线文件路径, 可以从 {} 下载".format(zs_history),
+    )
+
     if len(sys.argv) == 1:
         parser.print_help()
         sys.exit(1)
@@ -49,6 +57,7 @@ if __name__ == "__main__":
     sh = os.path.abspath(args.sh)
     sz = os.path.abspath(args.sz)
     bj = os.path.abspath(args.bj)
+    zs = os.path.abspath(args.zs)
 
 # 检查文件是否存在
 if not os.path.exists(sz) or not os.path.exists(sh) or not os.path.exists(bj):
@@ -58,7 +67,8 @@ if not os.path.exists(sz) or not os.path.exists(sh) or not os.path.exists(bj):
         print(f"错误: 文件 {sh} 不存在.")
     if not os.path.exists(bj):
         print(f"错误: 文件 {bj} 不存在.")
-
+    if not os.path.exists(zs):
+        print(f"错误: 文件 {zs} 不存在.")
     exit(1)
 
 
@@ -79,6 +89,7 @@ logger.info("解压证券日线文件")
 unzip_file(file_path=sh, target_path=prepare_dir, remove_file=False)
 unzip_file(file_path=sz, target_path=prepare_dir, remove_file=False)
 unzip_file(file_path=bj, target_path=prepare_dir, remove_file=False)
+unzip_file(file_path=zs, target_path=prepare_dir, remove_file=False)
 logger.info("日线文件解压完成")
 
 logger.info("转换 day 文件为 csv")
@@ -99,8 +110,8 @@ p.join()
 logger.info("导入完成")
 
 logger.info("导入 gbbq 表 (股本变迁)")
-gbbq_tdx.get_gbbq()
+gbbq = gbbq_tdx.get_gbbq()
 gbbq_file = work_dir.rstrip("/") + "/gbbq.csv"
-gbbq_db.to_csv(gbbq_file, index=False)
+gbbq.to_csv(gbbq_file, index=False)
 gbbq_db.bulk_insert_csv(file_path=gbbq_file)
 logger.info("导入完成")

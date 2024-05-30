@@ -166,48 +166,5 @@ class Gbbq(QuestBase):
             return data
 
 
-class Csi(QuestBase):
-    def create_table(self) -> None:
-        sql = """CREATE TABLE IF NOT EXISTS 'csi' (
-                    code SYMBOL INDEX,
-                    name string,
-                    exchange string);
-                """
-        self.sql_exec(sql)
-
-    def recreate_table(self):
-        sql = """
-        DROP TABLE 'csi';
-        """
-        self.sql_exec(sql)
-        self.create_table()
-
-    def bulk_insert_csv(self, file_path: str) -> None:
-        if os.path.exists(file_path):
-            schema = """[
-                {"name": "code",  "type": "symbol"},
-                {"name": "name",  "type": "string"},
-                {"name": "exchange",  "type": "string"},
-            ]"""
-            params = {"name": "csi"}
-            files = {
-                "schema": schema,
-                "data": open(file_path, "rb"),
-            }
-            requests.post(
-                "http://{host}:{port}/imp".format(host=self.host, port=self.rest_port),
-                params=params,
-                files=files,
-            )
-
-    def query(self):
-        sql = """select * from csi;"""
-        with psycopg2.connect(self.dsn) as conn:
-            data = pd.read_sql(sql, conn)
-        if not data.empty:
-            return data
-
-
 stock = Stock()
 gbbq = Gbbq()
-csi = Csi()

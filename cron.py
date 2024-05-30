@@ -3,15 +3,16 @@ import multiprocessing
 import pandas as pd
 
 from config import work_dir
-from utils import get_logger, list_dir, remove_dir
+from utils import get_logger, list_dir, remove_dir, WeChatSender
 
 from tdx import datatool, dayfile, datestr
 from tdx import gbbq as tdx_gbbq
-from db import stock
-from db import gbbq as gbbq_db
+from database import stock
+from database import gbbq as gbbq_db
 
 
 logger = get_logger(__name__)
+wx = WeChatSender()
 
 
 def update_gbbq():
@@ -26,15 +27,16 @@ def update_gbbq():
     logger.info("导入 gbbq 文件到数据库")
     gbbq_db.bulk_insert_csv(file_path=gbbq_file)
     logger.info("导入完成")
+    msg = """### <font color="info">更新 gbbq 表完成</font>\n"""
+    wx.send_markdown_msg(msg)
 
 
-def insert_dayfile(file: str):
-    dayfile.convert_to_csv(file)
-    csv = file.replace(".day", ".csv")
-    stock.bulk_insert_csv(csv)
+def update_oneday_stock(date: datestr = None):
+    def insert_dayfile(file: str):
+        dayfile.convert_to_csv(file)
+        csv = file.replace(".day", ".csv")
+        stock.bulk_insert_csv(csv)
 
-
-def oneday(date: datestr = None):
     d = datatool.download_dayfile(date)
     if d != "not workday":
         day_files = list_dir(d)
@@ -53,10 +55,10 @@ def update_stock():
     bj_latest = stock.latest_data("bj899050").index[0]
 
     if not (sh_latest == sz_latest == bj_latest):
-        logger.error(
-            """数据库中证券日线数据不完整,
-            请删除 questdb 所有数据后重新执行 prepare 初始化"""
-        )
+        msg = """数据库中证券日线数据不完整,请删除 questdb 所有数据后重新执行 prepare 初始化"""
+        wx_msg = f"""### <font color="warning">{msg}</font>\n"""
+        wx.send_markdown_msg(wx_msg)
+        logger.error(msg)
     else:
         latest_date = sh_latest.strftime("%Y%m%d")
         logger.info("数据库中证券日线数据最新日期是 {}".format(latest_date))
@@ -69,13 +71,15 @@ def update_stock():
         if not dates.empty:
             for i, date in enumerate(dates):
                 logger.info("尝试更新 {} 的数据".format(date.strftime("%Y-%m-%d")))
-                r = oneday(date.strftime("%Y%m%d"))
+                r = update_oneday_stock(date.strftime("%Y%m%d"))
                 if r:
                     logger.info("{} 的数据更新完成".format(date.strftime("%Y-%m-%d")))
                 else:
                     logger.info("{} 非交易日".format(date.strftime("%Y-%m-%d")))
         else:
             logger.info("stock 表数据已经是最新，不需要更新")
+    msg = """### <font color="info">更新 stock 表完成</font>\n"""
+    wx.send_markdown_msg(msg)
 
 
 if __name__ == "__main__":

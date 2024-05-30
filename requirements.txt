@@ -6,4 +6,5 @@ numpy
 mplfinance
 matplotlib
 colorama
-telebot
+xlrd
+beautifulSoup4

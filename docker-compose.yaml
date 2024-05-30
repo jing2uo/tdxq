@@ -1,22 +1,20 @@
-version: "3"
 services:
   db:
     image: questdb/questdb
     container_name: questdb
     restart: always
+    network_mode: host
     volumes:
       - /home/quest:/var/lib/questdb
-    ports:
-      - "9000:9000"
-
   app:
-    image: qtdx
-    container_name: qtdx
+    image: tdxq
+    container_name: tdxq
+    restart: always
+    network_mode: host
     environment:
       - WORK_DIR=/tmp/tdx
-      - DB_HOST=db
+      - QW_TOKEN=984f1f40
+      - DB_HOST=localhost
     command: ["sleep", "infinity"]
     volumes:
-      - /datapool/tdx:/tmp/tdx
-    depends_on:
-      - db
+      - /datapool/tdx:/tmp

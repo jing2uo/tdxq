@@ -1,11 +1,9 @@
-import requests
-import json
 import logging
-import telebot
+import os
+import json
+import requests
 
 from colorama import Fore, Style
-
-from config import feishu_token, tg_token, tg_chatid
 
 
 def get_logger(name):
@@ -39,16 +37,31 @@ class ColorFormatter(logging.Formatter):
         return formatter.format(record)
 
 
-def feishu_notify(text: str):
-    url = "https://open.feishu.cn/open-apis/bot/v2/hook/{token}".format(
-        token=feishu_token
-    )
-    keyword = "股票提醒"
-    payload = {"msg_type": "text", "content": {"text": keyword + text}}
-    headers = {"Content-Type": "application/json"}
-    requests.post(url, headers=headers, data=json.dumps(payload))
+class WeChatSender:
+    def __init__(self) -> None:
+        self.token = os.environ.get("QW_TOKEN", "")
+        self.webhook = (
+            f"https://qyapi.weixin.qq.com/cgi-bin/webhook/send?key={self.token}"
+        )
 
+    def send_markdown_msg(self, msg: str):
+        content = {
+            "msgtype": "markdown",
+            "markdown": {
+                "content": msg,
+            },
+        }
+        return self.send(content)
 
-def tg_notify(text: str):
-    bot = telebot.TeleBot(tg_token)
-    bot.send_message(tg_chatid, text)
+    def send(self, content: dict):
+        headers = {"Content-type": "application/json"}
+        response = requests.post(
+            self.webhook, data=json.dumps(content), headers=headers
+        )
+
+        resp_data = response.json()
+        if resp_data.get("errcode") != 0:
+            raise Exception(
+                f"post wechat message failed, status code: {response.status_code}, "
+                "content: {response.content}"
+            )
